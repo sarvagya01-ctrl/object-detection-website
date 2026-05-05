@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd"></script>
-<script defer src="https://cdn.jsdelivr.net/npm/face-api.js"></script>
+<script defer src="https://unpkg.com/face-api.js"></script>
 </head>
 <body>
 
@@ -78,7 +78,18 @@ let labeledDescriptors = [];
     await faceapi.nets.faceLandmark68Net.loadFromUri('/models');
     await faceapi.nets.faceRecognitionNet.loadFromUri('/models');
 }
+
 async function registerFace() {
+    if (!videoFeed.srcObject) {
+        alert("Please start camera first.");
+        return;
+    }
+
+    if (typeof faceapi === "undefined") {
+        alert("Face recognition system not loaded.");
+        return;
+    }
+
     const name = prompt("Enter your name:");
 
     if (!name) return;
@@ -91,9 +102,10 @@ async function registerFace() {
         .withFaceLandmarks()
         .withFaceDescriptor();
 
-        console.log("REGISTER DETECTION:", detection);
-        if (!detection) {
-        alert("No face detected. Please try again.");
+    console.log("REGISTER DETECTION:", detection);
+
+    if (!detection || !detection.descriptor) {
+        alert("No clear face detected. Please look at the camera and try again.");
         return;
     }
 
@@ -109,83 +121,103 @@ async function registerFace() {
 
     alert("Face registered successfully!");
 }
-        async function detectObjects() {
-            const predictions = await model.detect(videoFeed);
-            console.log(predictions);
-            const savedFace = JSON.parse(localStorage.getItem("registeredFace"));
 
-if (savedFace) {
-    const detection = await faceapi
-        .detectSingleFace(
-            videoFeed,
-            new faceapi.TinyFaceDetectorOptions()
-        )
-        .withFaceLandmarks()
-        .withFaceDescriptor();
+   
+async function detectObjects() {
+    const predictions = await model.detect(videoFeed);
+    console.log(predictions);
 
-    if (detection) {
-        const labeledDescriptor = new faceapi.LabeledFaceDescriptors(
-            savedFace.label,
-            [new Float32Array(savedFace.descriptor)]
-        );
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        const matcher = new faceapi.FaceMatcher(
-            [labeledDescriptor],
-            0.6
-        );
+    // FACE RECOGNITION
+    const savedFace = JSON.parse(localStorage.getItem("registeredFace"));
 
-        const bestMatch = matcher.findBestMatch(
-            detection.descriptor
-        );
+    if (savedFace && typeof faceapi !== "undefined") {
+        const detection = await faceapi
+            .detectSingleFace(
+                videoFeed,
+                new faceapi.TinyFaceDetectorOptions()
+            )
+            .withFaceLandmarks()
+            .withFaceDescriptor();
 
-        if (bestMatch.label !== "unknown") {
-            const box = detection.detection.box;
-
-            ctx.strokeStyle = "blue";
-            ctx.lineWidth = 3;
-
-            ctx.strokeRect(
-                box.x,
-                box.y,
-                box.width,
-                box.height
+        if (detection && detection.descriptor) {
+            const labeledDescriptor = new faceapi.LabeledFaceDescriptors(
+                savedFace.label,
+                [new Float32Array(savedFace.descriptor)]
             );
 
-            ctx.fillStyle = "blue";
-            ctx.font = "24px Arial";
-
-            ctx.fillText(
-                bestMatch.label,
-                box.x,
-                box.y - 10
+            const matcher = new faceapi.FaceMatcher(
+                [labeledDescriptor],
+                0.6
             );
+
+            const bestMatch = matcher.findBestMatch(
+                detection.descriptor
+            );
+
+            if (bestMatch.label !== "unknown") {
+                const box = detection.detection.box;
+
+                ctx.strokeStyle = "blue";
+                ctx.lineWidth = 3;
+
+                ctx.strokeRect(
+                    box.x,
+                    box.y,
+                    box.width,
+                    box.height
+                );
+
+                ctx.fillStyle = "blue";
+                ctx.font = "24px Arial";
+
+                ctx.fillText(
+                    bestMatch.label,
+                    box.x,
+                    box.y - 10
+                );
+            }
         }
     }
+
+    // OBJECT DETECTION
+    predictions.forEach(prediction => {
+        const [x, y, width, height] = prediction.bbox;
+
+        ctx.strokeStyle = "lime";
+        ctx.lineWidth = 2;
+
+        ctx.strokeRect(
+            x,
+            y,
+            width,
+            height
+        );
+
+        ctx.fillStyle = "lime";
+        ctx.font = "20px Arial";
+
+        ctx.fillRect(
+            x,
+            y - 25,
+            prediction.class.length * 12,
+            25
+        );
+
+        ctx.fillStyle = "black";
+
+        ctx.fillText(
+            prediction.class,
+            x,
+            y - 5
+        );
+    });
+
+    requestAnimationFrame(detectObjects);
 }
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
            
     
-            predictions.forEach(prediction => {
-                const [x, y, width, height] = prediction.bbox;
-    
-                ctx.strokeStyle = "lime";
-                ctx.lineWidth = 2;
-                ctx.strokeRect(x, y, width, height);
-    
-                ctx.fillStyle = "lime";
-ctx.font = "20px Arial";
-ctx.fillRect(x, y - 25, prediction.class.length * 12, 25);
-
-ctx.fillStyle = "black";
-ctx.fillText(
-    prediction.class,
-                    x,
-                    y > 10 ? y - 5 : 10
-                );
-            });
-    
-            requestAnimationFrame(detectObjects);
-        }
     
         async function startDetection() {
             await setupCamera();
