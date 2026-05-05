@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Object Detection Website</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    <h1>Smart Bin AI - Object Detection System</h1>
+    
+
+    <p class="subtitle">
+        Live Waste Detection | Smart Classification | AI Monitoring
+    </p>
+    <div class="status-panel">
+        <div class="analytics-panel">
+            <div class="analytics-box">Objects Detected: Live</div>
+            <div class="analytics-box" id="systemStatus">System Status: Monitoring</div>
+        </div>
+        <div class="button-panel">
+            <button onclick="startDetection()">Start Detection</button>
+            <button onclick="stopDetection()">Stop Detection</button>
+        </div>
+        <div class="status-box">Waste Monitoring: Active</div>
+      <div class="status-box">Segregation: Enabled</div>
+        
+        
+        <div class="camera-section">
+
+    
+            <div class="camera-container">
+                <img id="videoFeed" src="{{ url_for('video') }}">
+                <p id="statusMessage" style="display:none;">Detection Stopped</p>
+            </div>
+        
+
+        
+    </div>
+    <footer>
+        Built by Sarvagya shukla
+    </footer>
+    <script>
+        const videoFeed = document.getElementById("videoFeed");
+        const statusMessage = document.getElementById("statusMessage");
+        const cameraStatus = document.getElementById("cameraStatus");
+        const systemStatus = document.getElementById("systemStatus");
+        
+        function startDetection() {
+    videoFeed.src = "{{ url_for('video') }}";
+    videoFeed.style.display = "block";
+    statusMessage.style.display = "none";
+    cameraStatus.innerText = "Camera: Active";
+    systemStatus.innerText = "System Status: Monitoring";
+}
+
+
+            function stopDetection() {
+             videoFeed.src="";
+            videoFeed.style.display = "none";
+            statusMessage.style.display = "block";
+            cameraStatus.innerText = "Camera: Inactive";     
+            systemStatus.innerText = "System Status: Offline"; 
+
+}
+    </script>
+
+</body>
+</html>
