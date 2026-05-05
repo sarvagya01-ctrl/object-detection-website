@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/face-api.js"></script>
 </head>
 <body>
 
@@ -22,6 +23,7 @@
             <div class="analytics-box" id="systemStatus">System Status: Monitoring</div>
         </div>
         <div class="button-panel">
+            <button onclick="registerFace()">Register Face</button>
             <button onclick="startDetection()">Start Detection</button>
             <button onclick="stopDetection()">Stop Detection</button>
         </div>
@@ -50,6 +52,8 @@
         const ctx = canvas.getContext("2d");
     
         let model;
+        let faceMatcher;
+let labeledDescriptors = [];
     
         async function setupCamera() {
             const stream = await navigator.mediaDevices.getUserMedia({
@@ -69,19 +73,96 @@
                 };
             });
         }
-    
+        async function loadFaceModels() {
+    await faceapi.nets.tinyFaceDetector.loadFromUri('/models');
+    await faceapi.nets.faceLandmark68Net.loadFromUri('/models');
+    await faceapi.nets.faceRecognitionNet.loadFromUri('/models');
+}
+async function registerFace() {
+    const name = prompt("Enter your name:");
+
+    if (!name) return;
+
+    const detection = await faceapi
+        .detectSingleFace(
+            videoFeed,
+            new faceapi.TinyFaceDetectorOptions()
+        )
+        .withFaceLandmarks()
+        .withFaceDescriptor();
+
+    if (!detection) {
+        alert("No face detected. Please try again.");
+        return;
+    }
+
+    const savedData = {
+        label: name,
+        descriptor: Array.from(detection.descriptor)
+    };
+
+    localStorage.setItem(
+        "registeredFace",
+        JSON.stringify(savedData)
+    );
+
+    alert("Face registered successfully!");
+}
         async function detectObjects() {
             const predictions = await model.detect(videoFeed);
             console.log(predictions);
-    
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.strokeStyle = "red";
-ctx.lineWidth = 4;
-ctx.strokeRect(50, 50, 200, 200);
+            const savedFace = JSON.parse(localStorage.getItem("registeredFace"));
 
-ctx.fillStyle = "red";
-ctx.font = "30px Arial";
-ctx.fillText("TEST BOX", 60, 45);
+if (savedFace) {
+    const detection = await faceapi
+        .detectSingleFace(
+            videoFeed,
+            new faceapi.TinyFaceDetectorOptions()
+        )
+        .withFaceLandmarks()
+        .withFaceDescriptor();
+
+    if (detection) {
+        const labeledDescriptor = new faceapi.LabeledFaceDescriptors(
+            savedFace.label,
+            [new Float32Array(savedFace.descriptor)]
+        );
+
+        const matcher = new faceapi.FaceMatcher(
+            [labeledDescriptor],
+            0.6
+        );
+
+        const bestMatch = matcher.findBestMatch(
+            detection.descriptor
+        );
+
+        if (bestMatch.label !== "unknown") {
+            const box = detection.detection.box;
+
+            ctx.strokeStyle = "blue";
+            ctx.lineWidth = 3;
+
+            ctx.strokeRect(
+                box.x,
+                box.y,
+                box.width,
+                box.height
+            );
+
+            ctx.fillStyle = "blue";
+            ctx.font = "24px Arial";
+
+            ctx.fillText(
+                bestMatch.label,
+                box.x,
+                box.y - 10
+            );
+        }
+    }
+}
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+           
     
             predictions.forEach(prediction => {
                 const [x, y, width, height] = prediction.bbox;
