@@ -143,6 +143,14 @@ footer {
     height: 100%;
 }
 
+#overlay {
+    z-index: 2;
+}
+
+#videoFeed {
+    z-index: 1;
+}
+
 .camera-container {
     position: relative;
 }
