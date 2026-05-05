@@ -129,12 +129,20 @@ footer {
     position: relative;
 }
 #videoFeed {
-    width: 700px;
-    height: 500px;
-    display: block;
-    margin: 0 auto;
-    border: 4px solid limegreen;
-    border-radius: 15px;
+    width: 100%;
+    height: 100%;
     object-fit: cover;
+    display: block;
     background-color: black;
+}
+#videoFeed, #overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.camera-container {
+    position: relative;
 }

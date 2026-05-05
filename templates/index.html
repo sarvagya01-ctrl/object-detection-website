@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Object Detection Website</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd"></script>
 </head>
 <body>
 
@@ -32,6 +34,7 @@
     
             <div class="camera-container">
                 <video id="videoFeed" autoplay playsinline></video>
+                <canvas id="overlay"></canvas>
                 <p id="statusMessage" style="display:none;">Detection Stopped</p>
             </div>
         
