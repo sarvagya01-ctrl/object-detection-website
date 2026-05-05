@@ -155,7 +155,7 @@ async function detectObjects() {
                 detection.descriptor
             );
 
-            if (bestMatch.label !== "unknown") {
+            if (bestMatch.label !== "unknown" || bestMatch.distance < 0.75) {
                 const box = detection.detection.box;
 
                 ctx.strokeStyle = "blue";
