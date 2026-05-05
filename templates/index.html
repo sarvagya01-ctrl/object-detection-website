@@ -31,7 +31,7 @@
 
     
             <div class="camera-container">
-                <img id="videoFeed" src="{{ url_for('video') }}">
+                <video id="videoFeed" autoplay playsinline></video>
                 <p id="statusMessage" style="display:none;">Detection Stopped</p>
             </div>
         
@@ -43,25 +43,46 @@
     </footer>
     <script>
         const videoFeed = document.getElementById("videoFeed");
+        navigator.mediaDevices.getUserMedia({ video: true })
+    .then(function(stream) {
+        videoFeed.srcObject = stream;
+    })
+    .catch(function(error) {
+        alert("Camera access denied or not available.");
+    });
         const statusMessage = document.getElementById("statusMessage");
         const cameraStatus = document.getElementById("cameraStatus");
         const systemStatus = document.getElementById("systemStatus");
-        
+
+
+
+
         function startDetection() {
-    videoFeed.src = "{{ url_for('video') }}";
-    videoFeed.style.display = "block";
-    statusMessage.style.display = "none";
-    cameraStatus.innerText = "Camera: Active";
-    systemStatus.innerText = "System Status: Monitoring";
+    navigator.mediaDevices.getUserMedia({ video: true })
+        .then(function(stream) {
+            videoFeed.srcObject = stream;
+            videoFeed.style.display = "block";
+            statusMessage.style.display = "none";
+            cameraStatus.innerText = "Camera: Active";
+            systemStatus.innerText = "System Status: Monitoring";
+        });
+
 }
 
 
-            function stopDetection() {
-             videoFeed.src="";
-            videoFeed.style.display = "none";
-            statusMessage.style.display = "block";
-            cameraStatus.innerText = "Camera: Inactive";     
-            systemStatus.innerText = "System Status: Offline"; 
+function stopDetection() {
+    let stream = videoFeed.srcObject;
+
+    if (stream) {
+        let tracks = stream.getTracks();
+        tracks.forEach(track => track.stop());
+    }
+
+    videoFeed.srcObject = null;
+    videoFeed.style.display = "none";
+    statusMessage.style.display = "block";
+    cameraStatus.innerText = "Camera: Inactive";
+    systemStatus.innerText = "System Status: Offline";
 
 }
     </script>

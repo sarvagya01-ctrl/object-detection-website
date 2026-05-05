@@ -15,7 +15,7 @@ custom_labels = {
     "cell phone": "Mobile Detected"
 }
 # Open webcam
-camera = cv2.VideoCapture(0)
+camera = None
 
 def generate_frames():
  
