@@ -129,56 +129,7 @@ async function detectObjects() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     // FACE RECOGNITION
-    const savedFace = JSON.parse(localStorage.getItem("registeredFace"));
-
-    if (savedFace && typeof faceapi !== "undefined") {
-        const detection = await faceapi
-            .detectSingleFace(
-                videoFeed,
-                new faceapi.TinyFaceDetectorOptions()
-            )
-            .withFaceLandmarks()
-            .withFaceDescriptor();
-
-        if (detection && detection.descriptor) {
-            const labeledDescriptor = new faceapi.LabeledFaceDescriptors(
-                savedFace.label,
-                [new Float32Array(savedFace.descriptor)]
-            );
-
-            const matcher = new faceapi.FaceMatcher(
-                [labeledDescriptor],
-                0.6
-            );
-
-            const bestMatch = matcher.findBestMatch(
-                detection.descriptor
-            );
-
-            if (bestMatch.label !== "unknown" || bestMatch.distance < 0.75) {
-                const box = detection.detection.box;
-
-                ctx.strokeStyle = "blue";
-                ctx.lineWidth = 3;
-
-                ctx.strokeRect(
-                    box.x,
-                    box.y,
-                    box.width,
-                    box.height
-                );
-
-                ctx.fillStyle = "blue";
-                ctx.font = "24px Arial";
-
-                ctx.fillText(
-                    bestMatch.label,
-                    box.x,
-                    box.y - 10
-                );
-            }
-        }
-    }
+   
 
     // OBJECT DETECTION
     predictions.forEach(prediction => {
@@ -211,7 +162,56 @@ async function detectObjects() {
             x,
             y - 5
         );
-    });
+    }); const savedFace = JSON.parse(localStorage.getItem("registeredFace"));
+
+if (savedFace && typeof faceapi !== "undefined") {
+    const detection = await faceapi
+        .detectSingleFace(
+            videoFeed,
+            new faceapi.TinyFaceDetectorOptions()
+        )
+        .withFaceLandmarks()
+        .withFaceDescriptor();
+
+    if (detection && detection.descriptor) {
+        const labeledDescriptor = new faceapi.LabeledFaceDescriptors(
+            savedFace.label,
+            [new Float32Array(savedFace.descriptor)]
+        );
+
+        const matcher = new faceapi.FaceMatcher(
+            [labeledDescriptor],
+            0.6
+        );
+
+        const bestMatch = matcher.findBestMatch(
+            detection.descriptor
+        );
+
+        if (bestMatch.label !== "unknown" || bestMatch.distance < 0.75) {
+            const box = detection.detection.box;
+
+            ctx.strokeStyle = "blue";
+            ctx.lineWidth = 3;
+
+            ctx.strokeRect(
+                box.x,
+                box.y,
+                box.width,
+                box.height
+            );
+
+            ctx.fillStyle = "blue";
+            ctx.font = "24px Arial";
+
+            ctx.fillText(
+                bestMatch.label,
+                box.x,
+                box.y - 10
+            );
+        }
+    }
+}
 
     requestAnimationFrame(detectObjects);
 }
