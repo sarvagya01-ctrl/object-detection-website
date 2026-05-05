@@ -16,7 +16,7 @@
     <p class="subtitle">
         Live Waste Detection | Smart Classification | AI Monitoring
     </p>
-    <div class="status-panel">
+    <div class="status-panel"></div>
         <div class="analytics-panel">
             <div class="analytics-box">Objects Detected: Live</div>
             <div class="analytics-box" id="systemStatus">System Status: Monitoring</div>
@@ -46,48 +46,84 @@
     </footer>
     <script>
         const videoFeed = document.getElementById("videoFeed");
-        navigator.mediaDevices.getUserMedia({ video: true })
-    .then(function(stream) {
-        videoFeed.srcObject = stream;
-    })
-    .catch(function(error) {
-        alert("Camera access denied or not available.");
-    });
-        const statusMessage = document.getElementById("statusMessage");
-        const cameraStatus = document.getElementById("cameraStatus");
-        const systemStatus = document.getElementById("systemStatus");
-
-
-
-
-        function startDetection() {
-    navigator.mediaDevices.getUserMedia({ video: true })
-        .then(function(stream) {
+        const canvas = document.getElementById("overlay");
+        const ctx = canvas.getContext("2d");
+    
+        let model;
+    
+        async function setupCamera() {
+            const stream = await navigator.mediaDevices.getUserMedia({
+                video: true
+            });
+    
             videoFeed.srcObject = stream;
-            videoFeed.style.display = "block";
-            statusMessage.style.display = "none";
-            cameraStatus.innerText = "Camera: Active";
-            systemStatus.innerText = "System Status: Monitoring";
-        });
+    
+            return new Promise((resolve) => {
+                videoFeed.onloadedmetadata = () => {
+                    videoFeed.play();
+    
+                    canvas.width = videoFeed.videoWidth;
+                    canvas.height = videoFeed.videoHeight;
+    
+                    resolve();
+                };
+            });
+        }
+    
+        async function detectObjects() {
+            const predictions = await model.detect(videoFeed);
+            console.log(predictions);
+    
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.strokeStyle = "red";
+ctx.lineWidth = 4;
+ctx.strokeRect(50, 50, 200, 200);
 
-}
+ctx.fillStyle = "red";
+ctx.font = "30px Arial";
+ctx.fillText("TEST BOX", 60, 45);
+    
+            predictions.forEach(prediction => {
+                const [x, y, width, height] = prediction.bbox;
+    
+                ctx.strokeStyle = "lime";
+                ctx.lineWidth = 2;
+                ctx.strokeRect(x, y, width, height);
+    
+                ctx.fillStyle = "lime";
+ctx.font = "20px Arial";
+ctx.fillRect(x, y - 25, prediction.class.length * 12, 25);
 
-
-function stopDetection() {
-    let stream = videoFeed.srcObject;
-
-    if (stream) {
-        let tracks = stream.getTracks();
-        tracks.forEach(track => track.stop());
-    }
-
-    videoFeed.srcObject = null;
-    videoFeed.style.display = "none";
-    statusMessage.style.display = "block";
-    cameraStatus.innerText = "Camera: Inactive";
-    systemStatus.innerText = "System Status: Offline";
-
-}
+ctx.fillStyle = "black";
+ctx.fillText(
+    prediction.class,
+                    x,
+                    y > 10 ? y - 5 : 10
+                );
+            });
+    
+            requestAnimationFrame(detectObjects);
+        }
+    
+        async function startDetection() {
+            await setupCamera();
+    
+            model = await cocoSsd.load();
+    
+            detectObjects();
+        }
+    
+        function stopDetection() {
+            const stream = videoFeed.srcObject;
+    
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+            }
+    
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+    
+        startDetection();
     </script>
 
 </body>
