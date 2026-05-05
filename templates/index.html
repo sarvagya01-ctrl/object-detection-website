@@ -62,8 +62,8 @@
                 videoFeed.onloadedmetadata = () => {
                     videoFeed.play();
     
-                    canvas.width = videoFeed.videoWidth;
-                    canvas.height = videoFeed.videoHeight;
+                    canvas.width = videoFeed.clientWidth;
+                    canvas.height = videoFeed.clientHeight;
     
                     resolve();
                 };
