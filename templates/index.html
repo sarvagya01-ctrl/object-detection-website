@@ -91,7 +91,8 @@ async function registerFace() {
         .withFaceLandmarks()
         .withFaceDescriptor();
 
-    if (!detection) {
+        console.log("REGISTER DETECTION:", detection);
+        if (!detection) {
         alert("No face detected. Please try again.");
         return;
     }
@@ -188,6 +189,7 @@ ctx.fillText(
     
         async function startDetection() {
             await setupCamera();
+            await loadFaceModels();
     
             model = await cocoSsd.load();
     
